@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["jsonProtocol"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DB_URL") // uses connection pooling
+}
+
+enum FolderType {
+  CHAT
+  PROMPT
+}
+
+model Folder {
+  id       String     @id @default(cuid())
+  name     String
+  type     FolderType
+  userId   String?
+  user     User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chats    Chat[]
+  prompts  Prompt[]
+
+  @@map(name: "folders")
+  @@index(userId)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  role      String
+  content   String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId    String
+
+  @@map(name: "messages")
+  @@index(chatId)
+}
+
+model Model {
+  id          String   @id @default(cuid())
+  name        String
+  maxLength   Int
+  maxTokens   Int
+  chats       Chat[]
+  prompts     Prompt[]
+
+  @@map(name: "models")
+}
+
+model Chat {
+  id           String   @id @default(cuid())
+  name         String?
+  messages     Message[] 
+  prompt       String
+  temperature  Float
+  folderId     String?
+  userId       String?
+  modelId      String?
+  folder       Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model        Model?   @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@map(name: "chats")
+  @@index(userId)
+  @@index(modelId)
+  @@index(folderId)
+}
+
+model Prompt {
+  id            String  @id @default(cuid())
+  name          String?
+  content       String?
+  description   String?
+  folderId      String?
+  modelId       String?
+  userId        String?
+  folder        Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user          User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model         Model?  @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@map(name: "prompts")
+  @@index(userId)
+  @@index(modelId)
+  @@index(folderId)
+}
+
+model User {
+  id          String     @id @default(cuid())
+  username    String     @unique
+  password    String
+  refreshToken String?
+  createdAt   DateTime   @default(now()) @map(name: "created_at")
+  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
+  chats       Chat[]     
+  prompts     Prompt[]   
+  folders     Folder[]  
+
+  @@map(name: "users")
+  @@index(refreshToken)
+}

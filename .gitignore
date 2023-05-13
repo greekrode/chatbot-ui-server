@@ -1,0 +1,14 @@
+# Node and TypeScript related files
+node_modules/
+dist/
+*.log
+*.tsbuildinfo
+*.env
+*.env.test
+
+# IDE files
+.vscode/
+.idea/
+
+# Miscellaneous
+.DS_Store
